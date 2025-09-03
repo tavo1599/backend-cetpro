@@ -1,4 +1,5 @@
-import { Controller, Get, Post, Body, Param, Delete, UseInterceptors, UploadedFile, ParseUUIDPipe } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Delete, UseInterceptors, UseGuards, UploadedFile, ParseUUIDPipe } from '@nestjs/common';
+import { AuthGuard } from '@nestjs/passport';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { extname, join } from 'path';
@@ -10,6 +11,7 @@ export class NoticiasController {
   constructor(private readonly noticiasService: NoticiasService) {}
 
   @Post()
+  @UseGuards(AuthGuard('jwt'))
   @UseInterceptors(FileInterceptor('imagen', {
     storage: diskStorage({
       destination: './uploads/noticias', // Carpeta para imágenes de noticias
@@ -37,6 +39,7 @@ export class NoticiasController {
   }
 
   @Delete(':id')
+  @UseGuards(AuthGuard('jwt'))
   remove(@Param('id', ParseUUIDPipe) id: string) {
     return this.noticiasService.remove(id);
   }

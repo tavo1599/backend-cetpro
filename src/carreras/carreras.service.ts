@@ -5,6 +5,8 @@ import { Repository } from 'typeorm'; // CORRECTO: Viene de 'typeorm'
 import { Carrera } from './entities/carrera.entity'; // CORRECTO: Tu entidad
 import { CreateCarreraDto } from './dto/create-carrera.dto';
 import { UpdateCarreraDto } from './dto/update-carrera.dto';
+import { unlink } from 'fs/promises';
+import { join } from 'path';
 
 @Injectable()
 export class CarrerasService {
@@ -45,19 +47,30 @@ export class CarrerasService {
     return carrera;
   }
 
-  // CAMBIO: Implementada la lógica para actualizar una carrera.
-  async update(id: string, updateCarreraDto: UpdateCarreraDto): Promise<Carrera> {
-    // preload busca la carrera y la carga con los nuevos datos del DTO
+  async update(id: string, updateCarreraDto: UpdateCarreraDto, nuevaImagen?: Express.Multer.File): Promise<Carrera> {
     const carrera = await this.carreraRepository.preload({
-      id: id,
+      id,
       ...updateCarreraDto,
     });
 
     if (!carrera) {
-      throw new NotFoundException(`La carrera con el ID "${id}" no fue encontrada para actualizar`);
+      throw new NotFoundException(`Carrera con ID "${id}" no encontrada.`);
     }
-    
-    // Aquí podrías agregar la lógica para actualizar la imagen si se envía una nueva.
+
+    // Si se sube una nueva imagen
+    if (nuevaImagen) {
+      // Borramos la imagen anterior para no acumular basura
+      if (carrera.imagenUrl) {
+        try {
+          const oldImagePath = join(__dirname, '..', '..', 'uploads', carrera.imagenUrl);
+          await unlink(oldImagePath);
+        } catch (error) {
+          console.error('No se pudo borrar la imagen anterior:', error.message);
+        }
+      }
+      // Asignamos la nueva URL de imagen
+      carrera.imagenUrl = `/carreras/${nuevaImagen.filename}`;
+    }
 
     return this.carreraRepository.save(carrera);
   }

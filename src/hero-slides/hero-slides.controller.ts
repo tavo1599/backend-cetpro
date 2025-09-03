@@ -1,4 +1,5 @@
-import { Controller, Get, Post, Body, Param, Delete, UseInterceptors, UploadedFile, ParseUUIDPipe } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Delete, UseInterceptors, UseGuards, UploadedFile, ParseUUIDPipe } from '@nestjs/common';
+import { AuthGuard } from '@nestjs/passport';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { extname } from 'path';
@@ -10,6 +11,7 @@ export class HeroSlidesController {
   constructor(private readonly heroSlidesService: HeroSlidesService) {}
 
   @Post()
+  @UseGuards(AuthGuard('jwt'))
   @UseInterceptors(FileInterceptor('imagen', {
     storage: diskStorage({
       destination: './uploads/hero', // Nueva carpeta para las imágenes del carrusel
@@ -32,6 +34,7 @@ export class HeroSlidesController {
   }
 
   @Delete(':id')
+  @UseGuards(AuthGuard('jwt'))
   remove(@Param('id', ParseUUIDPipe) id: string) {
     return this.heroSlidesService.remove(id);
   }
