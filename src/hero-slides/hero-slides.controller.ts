@@ -1,10 +1,11 @@
-import { Controller, Get, Post, Body, Param, Delete, UseInterceptors, UseGuards, UploadedFile, ParseUUIDPipe } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Delete, UseInterceptors, Patch, UseGuards, UploadedFile, ParseUUIDPipe } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { extname } from 'path';
 import { HeroSlidesService } from './hero-slides.service';
 import { CreateHeroSlideDto } from './dto/create-hero-slide.dto';
+import { UpdateHeroSlideDto } from './dto/update-hero-slide.dto';
 
 @Controller('hero-slides')
 export class HeroSlidesController {
@@ -31,6 +32,17 @@ export class HeroSlidesController {
   @Get()
   findAll() {
     return this.heroSlidesService.findAll();
+  }
+
+  @Patch(':id')
+  @UseGuards(AuthGuard('jwt'))
+  @UseInterceptors(FileInterceptor('imagen', { /*...tu config de storage...*/ }))
+  update(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() updateHeroSlideDto: UpdateHeroSlideDto,
+    @UploadedFile() imagen?: Express.Multer.File,
+  ) {
+    return this.heroSlidesService.update(id, updateHeroSlideDto, imagen);
   }
 
   @Delete(':id')

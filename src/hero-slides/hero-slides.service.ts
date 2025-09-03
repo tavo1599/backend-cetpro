@@ -5,6 +5,7 @@ import { CreateHeroSlideDto } from './dto/create-hero-slide.dto';
 import { HeroSlide } from './entities/hero-slide.entity';
 import { unlink } from 'fs/promises'; // Para borrar archivos
 import { join } from 'path';
+import { UpdateHeroSlideDto } from './dto/update-hero-slide.dto';
 
 @Injectable()
 export class HeroSlidesService {
@@ -27,8 +28,35 @@ export class HeroSlidesService {
     return this.slideRepository.save(nuevoSlide);
   }
 
-  findAll(): Promise<HeroSlide[]> {
-    // Los devuelve ordenados por el campo 'orden'
+  async update(id: string, updateDto: UpdateHeroSlideDto, nuevaImagen?: Express.Multer.File): Promise<HeroSlide> {
+    const slide = await this.slideRepository.preload({
+      id,
+      ...updateDto,
+    });
+
+    if (!slide) {
+      throw new NotFoundException(`Slide con ID "${id}" no encontrado.`);
+    }
+
+    if (nuevaImagen) {
+      if (slide.imagenUrl) {
+        try {
+          const oldImagePath = join(__dirname, '..', '..', 'uploads', slide.imagenUrl);
+          await unlink(oldImagePath);
+        } catch (error) {
+          console.error('No se pudo borrar la imagen anterior:', error.message);
+        }
+      }
+      slide.imagenUrl = `/hero/${nuevaImagen.filename}`;
+    }
+    
+    return this.slideRepository.save(slide);
+  }
+
+findAll(): Promise<HeroSlide[]> {
+    // ▼▼▼ ESTA LÍNEA ES LA CLAVE ▼▼▼
+    // Le dice a la base de datos que ordene los slides por el campo 'orden'
+    // de forma ASCENDENTE (el número más bajo primero).
     return this.slideRepository.find({
       order: { orden: 'ASC' },
     });

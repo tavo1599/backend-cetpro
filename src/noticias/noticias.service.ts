@@ -5,6 +5,7 @@ import { CreateNoticiaDto } from './dto/create-noticia.dto';
 import { Noticia } from './entities/noticia.entity';
 import { unlink } from 'fs/promises';
 import { join } from 'path';
+import { UpdateNoticiaDto } from './dto/update-noticia.dto';
 
 @Injectable()
 export class NoticiasService {
@@ -25,6 +26,32 @@ export class NoticiasService {
     });
     
     return this.noticiaRepository.save(nuevaNoticia);
+  }
+
+  async update(id: string, updateNoticiaDto: UpdateNoticiaDto, nuevaImagen?: Express.Multer.File): Promise<Noticia> {
+    const noticia = await this.noticiaRepository.preload({
+      id,
+      ...updateNoticiaDto,
+    });
+
+    if (!noticia) {
+      throw new NotFoundException(`Noticia con ID "${id}" no encontrada.`);
+    }
+
+    if (nuevaImagen) {
+      if (noticia.imagenUrl) {
+        try {
+          const oldImagePath = join(__dirname, '..', '..', 'uploads', noticia.imagenUrl);
+          await unlink(oldImagePath);
+        } catch (error) {
+          console.error('No se pudo borrar la imagen anterior:', error.message);
+        }
+      }
+      noticia.imagenUrl = `/noticias/${nuevaImagen.filename}`;
+    }
+
+    // La fecha de publicación no se actualiza, se mantiene la original.
+    return this.noticiaRepository.save(noticia);
   }
 
   findAll(): Promise<Noticia[]> {

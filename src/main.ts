@@ -1,3 +1,5 @@
+// src/main.ts
+
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { join } from 'path';
@@ -7,20 +9,21 @@ import { ValidationPipe } from '@nestjs/common';
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
+  // Configuración de CORS
   const corsOrigin = 'http://localhost:4321';
-
-  // Configuración de CORS explícita
   app.enableCors({
     origin: corsOrigin,
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
     credentials: true,
   });
 
-  // Mensaje de verificación para la consola
-  console.log(`>>> CORS configurado para permitir: ${corsOrigin}`);
+  // ▼▼▼ ESTA ES LA LÍNEA CRUCIAL ▼▼▼
+  // Asegúrate de que { transform: true } esté aquí
+  app.useGlobalPipes(new ValidationPipe({
+    transform: true,
+  }));
 
-  app.useGlobalPipes(new ValidationPipe());
-
+  // Configuración de archivos estáticos
   app.useStaticAssets(join(__dirname, '..', 'uploads'), {
     prefix: '/',
   });

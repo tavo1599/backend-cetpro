@@ -16,7 +16,7 @@ import { AuthModule } from './auth/auth.module';
       type: 'postgres',
       host: 'localhost',
       port: 5432,
-      username: 'postgres',
+      username: 'admin',
       password: 'Ogremagic15.',
       database: 'DB_CEPTRO',
       entities: [Carrera, HeroSlide, Noticia, User],
